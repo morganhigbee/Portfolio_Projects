@@ -1,3 +1,104 @@
+## Covid 19 Data Exploration using BigQuery
+## Skills used: Joins, CTE's, Temp Tables, Window Functions, Aggregate Functions, Creating Views, and Converting Data Types
+
+SELECT *
+FROM PortfolioProject.CovidDeaths
+WHERE continent IS NOT NULL 
+ORDER BY 3, 4
+
+## Select Data that we are going to be starting with
+
+SELECT
+  location,
+  date,
+  total_cases,
+  new_cases,
+  total_deaths,
+  population
+FROM
+  `robotic-center-379022.Portfolio_Project.Covid_Deaths`
+WHERE
+  continent IS NOT NULL
+ORDER BY
+  1,2
+
+## Total Cases vs Total Deaths
+## Shows likelihood of dying if you contract covid in your country
+
+SELECT 
+  location,
+  date,
+  total_cases,
+  total_deaths,
+  (total_deaths/total_cases)*100 AS DeathPercentage
+FROM 
+  `robotic-center-379022.Portfolio_Project.Covid_Deaths`
+WHERE 
+  location LIKE 'United States' 
+  AND continent IS NOT NULL 
+ORDER BY 
+  1, 2
+
+## Total Cases vs Population
+## Shows what percentage of population infected with Covid
+
+SELECT 
+  location,
+  date,
+  population,
+  total_cases,
+  (total_cases/population)*100 AS Percent_Population_Infected
+FROM 
+  `robotic-center-379022.Portfolio_Project.Covid_Deaths`
+ORDER BY 
+  1,2
+
+## Total Cases vs Population
+## Shows what percentage of population infected with Covid
+
+SELECT 
+  location, 
+  population, 
+  MAX(total_cases) AS Highest_Infection_Count, 
+  MAX((total_cases/population))*100 AS Percent_Population_Infected
+FROM 
+  `robotic-center-379022.Portfolio_Project.Covid_Deaths`
+GROUP BY 
+  location, population
+ORDER BY 
+  Percent_Population_Infected DESC
+
+## Countries with Highest Death Count per Population
+
+SELECT 
+  location, 
+  MAX(total_deaths) AS Total_Death_Count
+FROM 
+  `robotic-center-379022.Portfolio_Project.Covid_Deaths`
+GROUP BY 
+  location
+ORDER BY 
+  Total_Death_Count DESC
+  
+  
+## BREAKING THINGS DOWN BY CONTINENT
+
+## Showing contintents with the highest death count per population
+
+SELECT 
+  continent, 
+  MAX(cast(Total_deaths as int)) AS Total_Death_Count
+FROM 
+  `robotic-center-379022.Portfolio_Project.Covid_Deaths`
+WHERE 
+  continent IS NOT NULL 
+GROUP BY 
+  continent
+ORDER BY 
+  Total_Death_Count DESC
+
+## GLOBAL NUMBERS
+
 SELECT
   SUM(total_cases) AS total_cases,
   SUM(total_deaths) AS total_deaths,
@@ -10,6 +111,8 @@ ORDER BY
   1,2
 
 ## Join Covid_Deaths & Covid_Vaccinations & looking at Total PopulationVS Vaccination
+## Using CTE to perform Calculation on Partition By in previous query
+
 SELECT
   Deaths.continent,
   Deaths.location,
@@ -27,7 +130,8 @@ AND Deaths.date = Vaccinations.date
 WHERE Deaths.continent IS NOT NULL
 ORDER BY 2,3
 
-## Temp Table
+## Temp Table to perform Calculation on Partition By in previous query
+
 WITH Percent_Population_Vaccinated AS (
   SELECT
     Deaths.continent,
@@ -50,28 +154,22 @@ WITH Percent_Population_Vaccinated AS (
 SELECT *
 FROM Percent_Population_Vaccinated;
 
+## Creating View to store data for later visualizations
 
-
-
-## Using CTE
-WITH Population_vs_Vaccination AS (
-  SELECT
-    Deaths.continent,
-    Deaths.location,
-    Deaths.date,
-    Deaths.population,
-    Vaccinations.new_vaccinations,
-    SUM(Vaccinations.new_vaccinations) OVER (PARTITION BY Deaths.location ORDER BY Deaths.date) AS Rolling_People_Vaccinated
-     FROM
-    `robotic-center-379022.Portfolio_Project.Covid_Deaths` AS Deaths
-  JOIN
-    `robotic-center-379022.Portfolio_Project.Covid_Vaccinations` AS Vaccinations
-  ON
-    Deaths.location = Vaccinations.location
-    AND Deaths.date = Vaccinations.date
-  WHERE
-    Deaths.continent IS NOT NULL
-)
-SELECT *, (Rolling_People_Vaccinated/population)*100
-FROM Population_vs_Vaccination
-
+CREATE VIEW PercentPopulationVaccinated AS
+SELECT 
+  Deaths.continent, 
+  Deaths.location, 
+  Deaths.date, 
+  Deaths.population, 
+  Vaccinations.new_vaccinations,
+  SUM(Vaccinations.new_vaccinations) OVER (PARTITION BY Death.location ORDER BY Deaths.date) AS Rolling_People_Vaccinated,
+  (SUM(Vaccinations.new_vaccinations)) OVER (PARTITION BY Deaths.location ORDER BY Deaths.date) / Deaths.population) * 100 AS Percent_Population_Vaccinated
+FROM 
+  `robotic-center-379022.Portfolio_Project.Covid_Deaths` AS Deaths
+JOIN 
+  `robotic-center-379022.Portfolio_Project.Covid_Vaccinations` AS Vaccinations
+  ON Deaths.location = Vaccinations.location
+  AND Deaths.date = Vaccinations.date
+WHERE 
+  Deaths.continent IS NOT NULL
