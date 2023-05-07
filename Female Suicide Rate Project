@@ -1,0 +1,108 @@
+import pandas as pd
+
+pd.read_csv('Master_Female_Suicide_List.csv')
+
+# Read the CSV file
+df = pd.read_csv('Master_Female_Suicide_List.csv')
+
+# Group by country and year
+df_grouped = df.groupby(['country', 'year'])['suicides_no', 'population'].sum().reset_index()
+
+# Calculate suicide rate
+df_grouped['suicide_rate'] = df_grouped['suicides_no'] / df_grouped['population'] * 100000
+
+# Round the suicide rate to 2 decimal places
+df_grouped['suicide_rate'] = df_grouped['suicide_rate'].round(2)
+
+# Save results to CSV file
+df_grouped.to_csv('Yearly_Suicide_Pop_and_Rate_For_Females.csv', index=False)
+-----------------------------------------------------------------------------------------------
+# Group the data by country and age, and calculate the sum of suicides
+grouped = df.groupby(['country', 'age'])['suicides_no'].sum()
+
+# Reshape the data to have a separate column for each age range
+reshaped = grouped.unstack()
+
+# Save the data to a new CSV file
+reshaped.to_csv('Female_suicide_by_country_and_age.csv')
+------------------------------------------------------------------------------------------------
+# read the data from the CSV file
+data = pd.read_csv("Master_Female_Suicide_List.csv")
+
+# filter the data for years between 1985 and 2016
+filtered_data = data[(data["year"] >= 1985) & (data["year"] <= 2016)]
+
+# group the data by country and year
+grouped_data = filtered_data.groupby(["country", "year"]).sum()
+
+# calculate the suicide rate
+grouped_data["suicide_rate"] = (grouped_data["suicides_no"] / grouped_data["population"]) * 100000
+
+# reset the index to convert the groupby result to a dataframe
+grouped_data.reset_index(inplace=True)
+
+# select only the columns we need
+result = grouped_data[["country", "year", "suicide_rate"]]
+
+# save the result as a CSV file
+result.to_csv("Yearly_Suicide_Rate_For_Females.csv", index=False)
+----------------------------------------------------------------------------------------------------
+import pandas as pd
+
+# Read the data from CSV file
+suicide_data = pd.read_csv('Master_Female_Suicide_List.csv')
+
+# Group the data by country, year, and age
+grouped_data = suicide_data.groupby(['country', 'year', 'age']).sum()
+
+# Reset the index to get the grouped columns as separate columns
+grouped_data = grouped_data.reset_index()
+
+# Save the grouped data to CSV file
+grouped_data.to_csv('Female_Suicide_Rates_By_Country_Year_Age.csv', index=False)
+----------------------------------------------------------------------------------------------------
+## Highest Female Suicide Rate by Country and Age
+
+import pandas as pd
+
+# Read in the data from the CSV file
+df = pd.read_csv('Master_Male_Suicide_List.csv')
+
+# Filter the data to only include the columns for country, age, and suicides/100k pop
+df_filtered = df[['country', 'age', 'suicides/100k pop']]
+
+# Group the data by country and age using .groupby()
+grouped = df_filtered.groupby(['country', 'age'])
+
+# Calculate the mean suicide rate for each country and age group using .mean()
+suicide_rates = grouped.mean()
+
+# Sort the results in descending order using .sort_values()
+highest_rates = suicide_rates.sort_values(by='suicides/100k pop', ascending=False)
+
+# Print the top 10 highest suicide rates by country and age group
+print(highest_rates.head(10))
+-------------------------------------------------------------------------------------------------------
+## Female Suicide Numbers per Country and Age
+import pandas as pd
+
+# Read the data from the CSV file
+data = pd.read_csv('Master_Female_Suicide_List.csv')
+
+# Filter the data for females
+female_data = data[data['sex'] == 'female']
+
+# Group the data by country, year, and age, and sum the suicides_no column
+grouped_data = female_data.groupby(['country', 'year', 'age'])['suicides_no'].sum().reset_index()
+
+# Sort the data by suicide number in descending order
+sorted_data = grouped_data.sort_values(by='suicides_no', ascending=False)
+
+# Print the top 10 countries by suicide number
+print(sorted_data.head(10))
+
+# Save the data to a CSV file
+sorted_data.to_csv('female_suicides_by_country_year_age.csv', index=False)
+
+highest_rates.to_csv('highest_suicide_rates.csv')
+----------------------------------------------------------------------------------------------
